@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Chart.Name}}-deployment
+  namespace: {{.Values.namespace}}
+  labels:
+    app: {{.Chart.Name}}
+    env: {{.Values.environment}}
+spec:
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: {{.Chart.Name}}
+      env: {{.Values.environment}}
+  replicas: {{.Values.autoscaling.default_replicas}}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        trigger_rollout: {{.Values.timestamp | quote}}
+      labels:
+        app: {{.Chart.Name}}
+        env: {{.Values.environment}}
+    spec:
+      containers:
+        - name: app
+          image: {{.Values.appImage.repository}}:{{.Values.appImage.appImageTag}}
+          imagePullPolicy: {{.Values.appImage.imagePullPolicy}}
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/sh", "-c", "cp -r /app/Public/* /var/www/html && php /cachetool.phar opcache:compile:scripts /app --fcgi=127.0.0.1:9000" ]
+          env:
+            - name: ACTIVE_APP
+              value: "Rewards"
+          resources:
+            requests:
+              memory: {{.Values.resources.requests.memory | quote}}
+              cpu: {{.Values.resources.requests.cpu | quote}}
+            limits:
+              memory: {{.Values.resources.limits.memory | quote}}
+              cpu: {{.Values.resources.limits.cpu | quote}}
+          volumeMounts:
+            - name: bloxland-config
+              mountPath: /app/.config
+              subPath: .config
+            - name: shared-files
+              mountPath: /var/www/html
+          ports:
+            - containerPort: {{.Values.ports.php}}
+              name: fastcgi
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: {{.Values.ports.php}}
+            timeoutSeconds: 3
+            failureThreshold: 1
+            periodSeconds: 20
+            initialDelaySeconds: 10
+
+        - name: nginx
+          image: nginx:stable-alpine
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "256M"
+              cpu: "250m"
+          ports:
+            - containerPort: {{.Values.ports.nginx}}
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - name: shared-files
+              mountPath: /app/Public
+            - name: nginx-conf-volume
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+
+      volumes:
+        - name: shared-files
+          emptyDir: { }
+        - name: bloxland-config
+          configMap:
+            name: {{.Chart.Name}}-bloxland-cm
+        - name: nginx-conf-volume
+          configMap:
+            name: {{.Chart.Name}}-nginx-cm

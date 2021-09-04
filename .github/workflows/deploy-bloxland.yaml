@@ -1,0 +1,66 @@
+name: "deploy-bloxland-chart"
+on:
+  workflow_dispatch:
+
+  pull_request:
+    branches: [ main ]
+    types: [ closed ]
+    paths:
+      - bloxland/**
+      - .github/workflows/deploy-bloxland.yaml
+env:
+  RELEASE_NAME: "bloxland"
+  RELEASE_FOLDER: "bloxland"
+  CLUSTER_NAME: "bloxland-cluster"
+  CLUSTER_NAMESPACE: "default"
+  REPOSITORY: "bloxland"
+  AWS_REGION: "us-east-2"
+jobs:
+  deploy:
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: main
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up kubectl
+        id: set-up-kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: "v1.22.0"
+
+      - name: Set up Helm
+        id: set-up-helm
+        uses: azure/setup-helm@v1
+        with:
+          version: "v3.6.3"
+
+      - name: Verify AWS
+        id: verify-aws
+        run: |
+          aws --version
+          aws sts get-caller-identity
+
+      - name: Get kube-config
+        run: |
+          aws eks --region ${{ env.AWS_REGION }} update-kubeconfig --name ${{ env.CLUSTER_NAME }}
+          kubectl cluster-info
+
+      - name: Helm Upgrade
+        id: helm
+        run: |
+          helm upgrade ${{ env.RELEASE_NAME }} ${{ env.RELEASE_FOLDER }} \
+          --set-string timestamp="$(date +%s)" \
+          --namespace ${{ env.CLUSTER_NAMESPACE }} \
+          --atomic \
+          --install \
+          --wait

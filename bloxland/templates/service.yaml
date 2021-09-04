@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Chart.Name}}-service
+  namespace: {{.Values.namespace}}
+  labels:
+    app: {{.Chart.Name}}
+    env: {{.Values.environment}}
+spec:
+  ports:
+    - port: {{.Values.ports.servicePort}}
+      protocol: TCP
+      targetPort: {{.Values.ports.nginx}}
+  selector:
+    app: {{.Chart.Name}}
+    env: {{.Values.environment}}
+  sessionAffinity: None
+  type: NodePort
+  externalTrafficPolicy: Local
