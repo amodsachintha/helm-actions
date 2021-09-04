@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Chart.Name}}-deployment
+  namespace: {{.Values.namespace}}
+  labels:
+    app: {{.Chart.Name}}
+    env: {{.Values.environment}}
+spec:
+  selector:
+    matchLabels:
+      app: {{.Chart.Name}}
+      env: {{.Values.environment}}
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{.Chart.Name}}
+        env: {{.Values.environment}}
+    spec:
+      containers:
+        - name: app
+          image: {{.Values.appImage}}
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: {{.Values.resources.limits.memory | quote}}
+              cpu: {{.Values.resources.limits.cpu | quote}}
+          ports:
+            - containerPort: {{.Values.ports.pod}}
+              name: http
+              protocol: TCP
+

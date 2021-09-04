@@ -1,0 +1,5 @@
+apiVersion: v2
+name: hello-world
+version: 1.0.0
+appVersion: 1.0.0
+description: "Custom Helm Chart to deploy and manage hello-world in k8s"

@@ -1,4 +1,4 @@
-name: "deploy-bloxland-chart"
+name: "deploy-hello-world-chart"
 on:
   workflow_dispatch:
 
@@ -6,15 +6,14 @@ on:
     branches: [ main ]
     types: [ closed ]
     paths:
-      - bloxland/**
-      - .github/workflows/deploy-bloxland.yaml
+      - hello-world/**
+      - .github/workflows/deploy-hello-world.yaml
 env:
-  RELEASE_NAME: "bloxland"
-  RELEASE_FOLDER: "bloxland"
-  CLUSTER_NAME: "bloxland-cluster"
+  RELEASE_NAME: "hello-world"
+  RELEASE_FOLDER: "hello-world"
+  CLUSTER_NAME: "first-cluster"
   CLUSTER_NAMESPACE: "default"
-  REPOSITORY: "bloxland"
-  AWS_REGION: "us-east-2"
+  AWS_REGION: "us-west-2"
 jobs:
   deploy:
     if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
@@ -59,7 +58,6 @@ jobs:
         id: helm
         run: |
           helm upgrade ${{ env.RELEASE_NAME }} ${{ env.RELEASE_FOLDER }} \
-          --set-string timestamp="$(date +%s)" \
           --namespace ${{ env.CLUSTER_NAMESPACE }} \
           --atomic \
           --install \

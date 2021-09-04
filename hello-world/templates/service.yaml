@@ -10,7 +10,7 @@ spec:
   ports:
     - port: {{.Values.ports.servicePort}}
       protocol: TCP
-      targetPort: {{.Values.ports.nginx}}
+      targetPort: {{.Values.ports.pod}}
   selector:
     app: {{.Chart.Name}}
     env: {{.Values.environment}}

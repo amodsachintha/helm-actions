@@ -1,0 +1,17 @@
+namespace: default
+environment: production
+
+appImage: crccheck/hello-world
+
+resources:
+  limits:
+    memory: "100M"
+    cpu: "100m"
+
+ports:
+  pod: 80
+  servicePort: 80
+
+ingress:
+  ingressClass: nginx
+  ingressDomain: "www.example.com"

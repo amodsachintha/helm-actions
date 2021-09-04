@@ -8,7 +8,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: "/"
 spec:
   rules:
-    - host: {{.Values.ingress.ingressDomain_1 | quote}}
+    - host: {{.Values.ingress.ingressDomain | quote}}
       http:
         paths:
           - pathType: ImplementationSpecific
@@ -19,13 +19,3 @@ spec:
                 port:
                   number: {{.Values.ports.servicePort}}
 
-    - host: {{.Values.ingress.ingressDomain_2 | quote}}
-      http:
-        paths:
-          - pathType: ImplementationSpecific
-            path: /
-            backend:
-              service:
-                name: {{.Chart.Name}}-service
-                port:
-                  number: {{.Values.ports.servicePort}}
